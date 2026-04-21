@@ -70,7 +70,7 @@ kind: Pod
 metadata:
   name: multi-container-pod
 spec:
-  container:
+  containers:
     - name: nginx
       image: nginx:1.25
       ports:
@@ -84,4 +84,109 @@ spec:
 - `containers:` 아래에 두 개가 있음
 - `nginx` 컨테이너
 - `side-tool` 컨테이너
+
+#### 실습
+##### 생성
+```bash
+kubectl apply -f multi-container-pod.yaml
+```
+
+##### 확인
+```bash
+kubectl get pod
+kubectl describe pod multi-container-pod
+```
+
+##### 로그 보기 (컨테이너 지정 옵션 `-c`)
+```bash
+kubectl logs multi-container-pod -c nginx
+kubectl logs multi-container-pod -c side-tool
+```
+
+##### 특정 컨테이너 exec
+```bash
+kubectl exec -it multi-container-pod -c nginx -- sh
+kubectl exec -it multi-container-pod -c side-tool -- sh
+```
 ___
+#### 🔴 Volume 구조 분석
+```yaml
+spec:
+  volumes:
+  - name: my-volume
+    emptyDir: {}
+
+  containers:
+  - name: app
+    image: nginx
+    volumeMounts:
+    - name: my-volume
+      mountPath: /data
+```
+1️⃣ `volumes` → Pod 레벨에서 "저장공간 정의" → 저장소 생성
+- `name`: 볼륨 이름 (✨ 연결할 때 사용)
+- `emptyDir`: Pod가 살아있는 동안 유지되는 임시 저장소
+  
+특징
+- Pod 안 모든 컨테이너가 접근 가능
+- Pod 삭제되면 데이터도 삭제됨
+
+2️⃣ `volumeMounts` → 컨테이너에서 "어디에 붙일지" 정의 → 컨테이너에 붙임
+- `name`: Volumes에서 만든 이름과 동일해야 함
+- `mountPath`: 컨테이너 내부 경로
+___
+#### 📖 Volume 공유 예제
+👉 하나의 컨테이너가 파일 쓰고, 다른 컨테이너가 읽게 해보는 것
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: shared-volume-pod
+spec:
+  volumes:
+  - name: shared-data
+    emptyDir: {}
+
+  containers:
+  - name: writer
+    image: busybox:1.36
+    command: ["sh", "-c", "while true; do date >> /data/out.txt; sleep 5; done"]
+    volumeMounts:
+    - name: shared-data
+      mountPath: /data
+  
+  - name: reader
+    image: busybox:1.36
+    command: ["sh", "-c", "while true; do cat /data/out.txt; sleep 5; done"]
+    volumeMounts:
+    - name: shared-data
+      mountPath: /data
+```
+
+##### ✨ 예제 설명
+- `empty` 볼륨 생성
+- `writer`와 `reader` 둘 다 `/data`에 mount
+- writer가 파일 생서
+- reader가 그 파일을 읽음
+
+즉, **같은 Pod 안 컨테이너끼리 파일 공유**가 가능
+___
+#### 🚫 주의할 점
+##### ❌ name 다르게 쓰는 경우
+```yaml
+volumes:
+- name: data
+
+volumeMounts:
+- name: data2   ❌
+```
+
+##### ❌ volumeMounts 안 쓰는 경우
+```yaml
+volumes:
+- name: data
+```
+👉 의미 없음
+
+##### ❌ mountPath 안 쓰는 경우
+👉 컨테이너 내부에서 접근 불가
