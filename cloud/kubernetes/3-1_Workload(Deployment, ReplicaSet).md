@@ -25,7 +25,7 @@ spec:
 ```
 👉 핵심 포인트
 - `replicas`: 유지할 Pod 개수
-- `selecotr`: 어떤 Pod를 관리할지
+- `selector`: 어떤 Pod를 관리할지
 - `template`: Pod 생성방식
 
 ___
@@ -62,7 +62,7 @@ spec:
       - name: nginx
         image: nginx
 ```
-👉 구조가 정말 비슷하지만 Deployment에넌 **업데이트 전략**까지 포함. `spec.startegy` 필드 (Deployment에만 있고, ReplicaSet ❌)
+👉 구조가 정말 비슷하지만 Deployment에넌 **업데이트 전략**까지 포함. `spec.strategy` 필드 (Deployment에만 있고, ReplicaSet ❌)
 ___
 #### Deployment vs ReplicaSet 차이
 |항목|ReplicaSet|Deployment|
