@@ -93,7 +93,7 @@ kubectl apply -f multi-container-pod.yaml
 
 ##### 확인
 ```bash
-kubectl get pod
+kubectl get pods
 kubectl describe pod multi-container-pod
 ```
 
