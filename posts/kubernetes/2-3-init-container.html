@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2-3 init container | Junnnhhh Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.8.1/github-markdown-light.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/styles/github.min.css">
+  <link rel="stylesheet" href="../post.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="../../index.html">Junnnhhh.dev</a>
+      <a class="back-link" href="../../index.html#posts">목록으로</a>
+    </div>
+  </header>
+  <main class="shell article-wrap">
+    <header class="article-head">
+      <h1>2-3 init container</h1>
+      <p>cloud / kubernetes</p>
+    </header>
+    <article class="markdown-body article">
+<h2>🔥 Init Container</h2>
+<h4>📖 개념</h4>
+<p>👉 Init Container = “메인 컨테이너 실행 전에 먼저 실행되는 컨테이너”</p>
+<ul>
+<li>Pod 안에 포함됨</li>
+<li>반드시 순서대로 실행됨</li>
+<li>하나라도 실패하면 → Pod 실행 안됨</li>
+<li>성공해야 다음 컨테이너 실행됨</li>
+</ul>
+<hr>
+<h4>📌 사용 시점</h4>
+<p>👉 Init Container는 “준비 작업” 담당<br>
+ex:<br>
+1️⃣ 앱 실행 전에 데이터 준비</p>
+<ul>
+<li>DB 연결 확인</li>
+<li>config 파일 다운로드</li>
+<li>외부 API에서 데이터 가져오기</li>
+</ul>
+<p>2️⃣ 의존성 체크</p>
+<ul>
+<li>다른 서비스가 살아있는지 확인</li>
+<li>ex) DB, Redis 기다리기</li>
+</ul>
+<p>3️⃣ 권한/환경 세팅</p>
+<ul>
+<li>디렉토리 생성</li>
+<li>파일 권한 변경</li>
+</ul>
+<hr>
+<h4>📌 일반 컨테이너랑 차이</h4>
+<table>
+<thead>
+<tr>
+<th>구분</th>
+<th>Init Container</th>
+<th>일반 Container</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>실행시점</td>
+<td>먼저 실행</td>
+<td>이후 실행</td>
+</tr>
+<tr>
+<td>실행방식</td>
+<td>순차 실행</td>
+<td>병렬 실행</td>
+</tr>
+<tr>
+<td>재시작</td>
+<td>실패 시 재시도</td>
+<td>정책 따름</td>
+</tr>
+<tr>
+<td>역할</td>
+<td>준비 작업</td>
+<td>실제 서비스</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h4>📌 YAML 구조</h4>
+<p>👉 <code>initContainers</code> 필드가 핵심</p>
+<pre><code class="hljs language-yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Pod</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">init-example</span>
+<span class="hljs-attr">spec:</span>
+  <span class="hljs-attr">initContainers:</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">init-myservice</span>
+    <span class="hljs-attr">image:</span> <span class="hljs-string">busybox</span>
+    <span class="hljs-attr">command:</span> [<span class="hljs-string">&#x27;sh&#x27;</span>, <span class="hljs-string">&#x27;-c&#x27;</span>, <span class="hljs-string">&#x27;echo init start &amp;&amp; sleep 5&#x27;</span>]
+
+  <span class="hljs-attr">containers:</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">main-container</span>
+    <span class="hljs-attr">image:</span> <span class="hljs-string">nginx</span>
+</code></pre>
+<h5>🏃‍♂️‍➡️ 실행 흐름</h5>
+<pre><code class="hljs language-text">1. initContainers 실행
+2. 성공하면 다음 initContainer 실행 (여러 개면 순서대로)
+3. 전부 성공하면
+4. containers 실행 (메인 컨테이너)
+</code></pre>
+<hr>
+<h4>🔴 정리</h4>
+<p>👉 Init Container는 메인 컨테이너 실행 전에 필요한 준비 작업을 수행하는 컨테이너</p>
+
+    </article>
+  </main>
+</body>
+</html>

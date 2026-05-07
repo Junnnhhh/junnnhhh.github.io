@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pod 문제 q1 | Junnnhhh Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.8.1/github-markdown-light.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/styles/github.min.css">
+  <link rel="stylesheet" href="../post.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="../../index.html">Junnnhhh.dev</a>
+      <a class="back-link" href="../../index.html#posts">목록으로</a>
+    </div>
+  </header>
+  <main class="shell article-wrap">
+    <header class="article-head">
+      <h1>Pod 문제 q1</h1>
+      <p>cloud / kubernetes / questions / pod</p>
+    </header>
+    <article class="markdown-body article">
+<h3>❓문제 1</h3>
+<p>다음 조건을 만족하는 Pod를 생성하라</p>
+<ul>
+<li>Pod  이름 : <code>nginx-pod</code></li>
+<li>이미지 : <code>nginx</code></li>
+<li>라벨 : <code>app=web</code></li>
+</ul>
+<p>👉 생성 후 실행 상태인지 확인하라.</p>
+<hr>
+<h3>➡️ 내 답변</h3>
+<pre><code class="hljs language-bash">kubectl run nginx-pod --image=nginx --dry-run=client -o yaml &gt; nginx-pod.yaml
+
+</code></pre>
+<p>이걸로 yaml 샘플본을 하나 만들고,</p>
+<pre><code class="hljs language-yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Pod</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">labels:</span>
+    <span class="hljs-attr">run:</span> <span class="hljs-string">nginx-pod</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-pod</span> <span class="hljs-comment"># → name: app-web으로 수정함.</span>
+<span class="hljs-attr">spec:</span>
+  <span class="hljs-attr">containers:</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-attr">image:</span> <span class="hljs-string">nginx</span>
+    <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-pod</span>
+    <span class="hljs-attr">resources:</span> {}
+  <span class="hljs-attr">dnsPolicy:</span> <span class="hljs-string">ClusterFirst</span>
+  <span class="hljs-attr">restartPolicy:</span> <span class="hljs-string">Always</span>
+<span class="hljs-attr">status:</span> {}
+</code></pre>
+<p>주석을 달아놓은 것처럼 metadata.name을 app-web으로 수정했다.<br>
+(문제를 잘못 읽음…)</p>
+<p>그래서 문제 요구사항 중, Pod명 + 라벨 모두 틀렸다…</p>
+<hr>
+<h3>✅ 정답</h3>
+<pre><code class="hljs language-yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Pod</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-pod</span>
+  <span class="hljs-attr">labels:</span>
+    <span class="hljs-attr">app:</span> <span class="hljs-string">web</span>
+<span class="hljs-attr">spec:</span>
+  <span class="hljs-attr">containers:</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">nginx</span>
+    <span class="hljs-attr">image:</span> <span class="hljs-string">nginx</span>
+</code></pre>
+<pre><code class="hljs language-bash">kubectl apply -f nginx.yaml
+</code></pre>
+<hr>
+<h3>📖 피드백</h3>
+<h4>💡 Label의 역할</h4>
+<p>👉 리소스를 구분하고 선택하기 위한 태그</p>
+<ul>
+<li>Pod, Deployment 등에 붙이는 이름표</li>
+<li>Kubernetes가 이걸 보고 대상을 찾음</li>
+</ul>
+<hr>
+<h3>📌 대표적인 사용 예</h3>
+<h4>1️⃣ Service가 Pod 찾을 때</h4>
+<pre><code class="hljs language-yaml"><span class="hljs-attr">labels:</span>
+  <span class="hljs-attr">app:</span> <span class="hljs-string">web</span>
+</code></pre>
+<p>Service:</p>
+<pre><code class="hljs language-yaml"><span class="hljs-attr">selector:</span>
+  <span class="hljs-attr">app:</span> <span class="hljs-string">web</span>
+</code></pre>
+<p>👉 의미</p>
+<blockquote>
+<p>“app=web 라벨 붙은 Pod들한테 트래픽 보내라”</p>
+</blockquote>
+<hr>
+<h4>2️⃣ Deployment가 Pod 관리할 때</h4>
+<p>Deployment:</p>
+<pre><code class="hljs language-yaml"><span class="hljs-attr">selector:</span>
+  <span class="hljs-attr">matchLabels:</span>
+    <span class="hljs-attr">app:</span> <span class="hljs-string">web</span>
+</code></pre>
+<p>👉 의미</p>
+<blockquote>
+<p>“내가 관리할 Pod는 app=web”</p>
+</blockquote>
+<hr>
+<h4>3️⃣ kubectl로 필터링</h4>
+<pre><code class="hljs language-bash">kubectl get pods -l app=web
+</code></pre>
+<p>👉 특정 Pod만 조회 가능</p>
+<hr>
+<h3>📊 핵심 정리</h3>
+<table>
+<thead>
+<tr>
+<th>개념</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Label</td>
+<td>리소스에 붙이는 key-value 태그</td>
+</tr>
+<tr>
+<td>Selector</td>
+<td>Label로 대상 선택하는 조건</td>
+</tr>
+<tr>
+<td>목적</td>
+<td>그룹핑 + 연결</td>
+</tr>
+</tbody>
+</table>
+<p>👉 Label → Kubernetes에서 “누구인지 식별하는 기준”</p>
+
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>4-2 DNS and Ingress | Junnnhhh Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.8.1/github-markdown-light.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/styles/github.min.css">
+  <link rel="stylesheet" href="../post.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="../../index.html">Junnnhhh.dev</a>
+      <a class="back-link" href="../../index.html#posts">목록으로</a>
+    </div>
+  </header>
+  <main class="shell article-wrap">
+    <header class="article-head">
+      <h1>4-2 DNS and Ingress</h1>
+      <p>cloud / kubernetes</p>
+    </header>
+    <article class="markdown-body article">
+<h2>🔥 DNS &amp; Ingress</h2>
+<h4>1️⃣ Kubernetes DNS</h4>
+<h5>✔️ 개념</h5>
+<p>👉 Service를 이름으로 접근하게 해주는 기능</p>
+<pre><code class="hljs language-text">http://서비스이름
+</code></pre>
+<p>👉 내부적으로는 <strong>CoreDNS</strong>가 처리</p>
+<h5>✔️ Service DNS 구조</h5>
+<pre><code class="hljs language-text">&lt;service-name&gt;.&lt;namespace&gt;.svc.cluster.local
+</code></pre>
+<h5>✔️ 예시</h5>
+<pre><code class="hljs language-text">my-service.default.svc.cluster.local
+</code></pre>
+<p>👉 하지만 보통은 ↓ 이렇게만 씀</p>
+<pre><code class="hljs language-text">http://my-service
+</code></pre>
+<h5>✔️ 핵심 포인트</h5>
+<ul>
+<li>Pod IP 몰라도 됨</li>
+<li>Service 이름으로 통신</li>
+<li>namespace 다르면 FQDN 필요</li>
+</ul>
+<hr>
+<h4>2️⃣ Ingress</h4>
+<h5>✔️ 개념</h5>
+<p>👉 외부 요청을 내부 Service로 라우팅하는 규칙</p>
+<ul>
+<li>NodePort → 포트 기반 접근</li>
+<li>Ingress → 도메인 / 경로 기반 접근</li>
+</ul>
+<h5>✔️ 흐름</h5>
+<pre><code class="hljs language-text">Client → Ingress → Service → Pod
+</code></pre>
+<hr>
+<h5>✔️ 필요한 이유?</h5>
+<p>NodePort 방식은 아래와 같은 문제가 있음</p>
+<pre><code class="hljs language-text">http://nodeip:30001 → A 서비스
+http://nodeip:30002 → B 서비스
+</code></pre>
+<p>👉 포트를 기억애햐 함</p>
+<p>Ingress 쓰면 ↓</p>
+<pre><code class="hljs language-text">http://api.my.com → A 서비스
+http://shop.my.com → B 서비스
+</code></pre>
+<p>👉 훨씬 현실적인 구조</p>
+<hr>
+<h4>3️⃣ Ingree YAML</h4>
+<h5>✔️ 기본 예제</h5>
+<pre><code class="hljs language-yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">networking.k8s.io/v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Ingress</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">my-ingress</span>
+<span class="hljs-attr">spec:</span>
+  <span class="hljs-attr">rules:</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-attr">host:</span> <span class="hljs-string">my-app.com</span>
+    <span class="hljs-attr">http:</span>
+      <span class="hljs-attr">paths:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-attr">path:</span> <span class="hljs-string">/</span>
+        <span class="hljs-attr">pathType:</span> <span class="hljs-string">Prefix</span>
+        <span class="hljs-attr">backend:</span>
+          <span class="hljs-attr">service:</span>
+            <span class="hljs-attr">name:</span> <span class="hljs-string">my-service</span>
+            <span class="hljs-attr">port:</span>
+              <span class="hljs-attr">number:</span> <span class="hljs-number">80</span>
+</code></pre>
+<h5>✔️ path 기반 라우팅</h5>
+<pre><code class="hljs language-yaml"><span class="hljs-attr">paths:</span>
+<span class="hljs-bullet">-</span> <span class="hljs-attr">path:</span> <span class="hljs-string">/api</span>
+  <span class="hljs-attr">pathType:</span> <span class="hljs-string">Prefix</span>
+  <span class="hljs-attr">backend:</span>
+    <span class="hljs-attr">service:</span>
+      <span class="hljs-attr">name:</span> <span class="hljs-string">api-service</span>
+      <span class="hljs-attr">port:</span>
+        <span class="hljs-attr">number:</span> <span class="hljs-number">80</span>
+</code></pre>
+<p>👉 <code>/api</code> 요청만 해당 서비스로 감</p>
+<hr>
+<h4>4️⃣ Ingress Controller</h4>
+<p>👉 Ingress는 <strong>리소스 정의만 하는 것</strong><br>
+👉 실제 동작하려면:</p>
+<ul>
+<li>Controller 필요<br>
+대표적으로:</li>
+<li>nginx ingress controller</li>
+</ul>
+<hr>
+<h4>🔥 핵심 정리</h4>
+<h5>DNS</h5>
+<ul>
+<li>Service 이름으로 접근</li>
+<li>내부 통신 필수 개념</li>
+</ul>
+<h5>Ingress</h5>
+<ul>
+<li>외부 → 내부 라우팅</li>
+<li>도메인 / path 기반</li>
+<li>Controller 필요</li>
+</ul>
+<h5>Service vs Ingress 차이</h5>
+<ul>
+<li>Service → Pod 연결</li>
+<li>Ingress → 외부 트래픽 라우팅</li>
+</ul>
+
+    </article>
+  </main>
+</body>
+</html>
