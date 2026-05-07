@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3-1 Workload(Deployment, ReplicaSet) | Junnnhhh Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.8.1/github-markdown-light.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/styles/github.min.css">
+  <link rel="stylesheet" href="../post.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="../../index.html">Junnnhhh.dev</a>
+      <a class="back-link" href="../../index.html#posts">목록으로</a>
+    </div>
+  </header>
+  <main class="shell article-wrap">
+    <header class="article-head">
+      <h1>3-1 Workload(Deployment, ReplicaSet)</h1>
+      <p>cloud / kubernetes</p>
+    </header>
+    <article class="markdown-body article">
+<h2>🔥 Workload(Deployment / ReplicaSet)</h2>
+<h4>1️⃣ ReplicaSet</h4>
+<p>역할 : Pod 개수를 유지하는 것</p>
+<ul>
+<li>지정한 개수만큼 Pod 유지</li>
+<li>죽으면 자동으로 다시 생성</li>
+</ul>
+<pre><code class="hljs language-yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">ReplicaSet</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">my-rs</span>
+<span class="hljs-attr">spec:</span>
+  <span class="hljs-attr">replicas:</span> <span class="hljs-number">3</span>
+  <span class="hljs-attr">selector:</span>
+    <span class="hljs-attr">matchLabels:</span>
+      <span class="hljs-attr">app:</span> <span class="hljs-string">my-app</span>
+  <span class="hljs-attr">template:</span>
+    <span class="hljs-attr">metadata:</span>
+      <span class="hljs-attr">labels:</span>
+        <span class="hljs-attr">app:</span> <span class="hljs-string">my-app</span>
+    <span class="hljs-attr">spec:</span>
+      <span class="hljs-attr">containers:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">nginx</span>
+        <span class="hljs-attr">image:</span> <span class="hljs-string">nginx</span>
+</code></pre>
+<p>👉 핵심 포인트</p>
+<ul>
+<li><code>replicas</code>: 유지할 Pod 개수</li>
+<li><code>selector</code>: 어떤 Pod를 관리할지</li>
+<li><code>template</code>: Pod 생성방식</li>
+</ul>
+<hr>
+<h4>2️⃣ Deployment</h4>
+<p><strong>ReplicaSet을 관리하는 상위 개녕</strong></p>
+<h5>✔️ 역할</h5>
+<ul>
+<li>ReplicaSet 생성/관리</li>
+<li>Rolling Update</li>
+<li>Rollback 가능</li>
+</ul>
+<pre><code class="hljs language-yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">my-deploy</span>
+<span class="hljs-attr">spec:</span>
+  <span class="hljs-attr">replicas:</span> <span class="hljs-number">3</span>
+
+  <span class="hljs-attr">strategy:</span>                <span class="hljs-comment"># 👈 이게 핵심</span>
+    <span class="hljs-attr">type:</span> <span class="hljs-string">RollingUpdate</span>
+    <span class="hljs-attr">rollingUpdate:</span>
+      <span class="hljs-attr">maxUnavailable:</span> <span class="hljs-number">1</span>
+      <span class="hljs-attr">maxSurge:</span> <span class="hljs-number">1</span>
+
+  <span class="hljs-attr">selector:</span>
+    <span class="hljs-attr">matchLabels:</span>
+      <span class="hljs-attr">app:</span> <span class="hljs-string">my-app</span>
+  <span class="hljs-attr">template:</span>
+    <span class="hljs-attr">metadata:</span>
+      <span class="hljs-attr">labels:</span>
+        <span class="hljs-attr">app:</span> <span class="hljs-string">my-app</span>
+    <span class="hljs-attr">spec:</span>
+      <span class="hljs-attr">containers:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">nginx</span>
+        <span class="hljs-attr">image:</span> <span class="hljs-string">nginx</span>
+</code></pre>
+<p>👉 구조가 정말 비슷하지만 Deployment에넌 <strong>업데이트 전략</strong>까지 포함. <code>spec.strategy</code> 필드 (Deployment에만 있고, ReplicaSet ❌)</p>
+<hr>
+<h4>Deployment vs ReplicaSet 차이</h4>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>ReplicaSet</th>
+<th>Deployment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>목적</td>
+<td>Pod 개수 유지</td>
+<td>Pod+업데이트 관리</td>
+</tr>
+<tr>
+<td>사용여부</td>
+<td>거의안씀</td>
+<td>🔥필수</td>
+</tr>
+<tr>
+<td>업데이트</td>
+<td>수동</td>
+<td>자동 (Rolling Update)</td>
+</tr>
+<tr>
+<td>Rollback</td>
+<td>없음</td>
+<td>있음</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h4>4️⃣ Rolling Update</h4>
+<p>Deployment의 핵심 기능<br>
+👉 이미지 변경 시</p>
+<ul>
+<li>기존 Pod 죽이고</li>
+<li>새 Pod 점진적으로 생성</li>
+</ul>
+<pre><code class="hljs language-bash">kubectl <span class="hljs-built_in">set</span> image deployment my-deploy nginx-nginx:1.25
+</code></pre>
+<p>확인</p>
+<pre><code class="hljs language-bash">kubectl rollout status deployment my-deploy
+</code></pre>
+<hr>
+<h4>5️⃣ Rollback</h4>
+<p>👉 배포 실패 시, 이전 버전으로 복구</p>
+<pre><code class="hljs language-bash">kubectl rollout undo deployment my-deploy
+</code></pre>
+
+    </article>
+  </main>
+</body>
+</html>

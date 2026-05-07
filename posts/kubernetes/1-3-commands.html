@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>1-3 명령어 정리 | Junnnhhh Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.8.1/github-markdown-light.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/styles/github.min.css">
+  <link rel="stylesheet" href="../post.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="../../index.html">Junnnhhh.dev</a>
+      <a class="back-link" href="../../index.html#posts">목록으로</a>
+    </div>
+  </header>
+  <main class="shell article-wrap">
+    <header class="article-head">
+      <h1>1-3 명령어 정리</h1>
+      <p>cloud / kubernetes</p>
+    </header>
+    <article class="markdown-body article">
+<h2>🔥 명령어 정리</h2>
+<h4>🚩 <code>kubectl apply -f pod.yaml</code></h4>
+<ul>
+<li><code>-f</code> = file</li>
+<li><code>pod.yaml</code> 파일 내용을 kubernetes에 적용<br>
+👉 Kubernetes는 이 YAML을 읽고 Pod가 없으면 새로 만들고, 이미 있으면 변경사항을 반영</li>
+</ul>
+<hr>
+<h4>🚩 <code>kubectl get pods</code></h4>
+<ul>
+<li>현재 네임스페이스의 Pod 목록 조회<br>
+ex)</li>
+</ul>
+<pre><code class="hljs language-bash">NAME       READY   STATUS    RESTARTS   AGE
+my-nginx   1/1     Running   0          10s
+</code></pre>
+<ul>
+<li><code>1/1</code>: 컨테이너 1개가 준비됨</li>
+<li><code>Running</code>: 실행 중</li>
+<li><code>0</code>: 재시작 횟수</li>
+<li><code>10s</code>: 만든지 10초</li>
+</ul>
+<hr>
+<h4>🚩 <code>kubectl delete pod my-nginx</code></h4>
+<p>👉 이름이 <code>my-nginx</code>인 Pod 삭제</p>
+<hr>
+<h4>🚩 <code>kubectl run nginx --imgage=nginx</code></h4>
+<p>👉 명령어 한 줄로 Pod를 빠르게 생성(YAML 파일 없이 바로 만들 수 있음)</p>
+<hr>
+<h4>🚩 <code>kubectl exec -it nginx-pod -- bash</code></h4>
+<p>👉 실행중인 Pod 안으로 들어가서 명령어 실행</p>
+<h5>옵션 설명</h5>
+<ul>
+<li><code>exec</code>: 컨테이너 안에서 명령 실행</li>
+<li><code>-i</code>: 표준입력 유지</li>
+<li><code>-t</code>: 터미널처럼 사용</li>
+<li><code>nginx-pod</code>: Pod 이름</li>
+<li><code>-- bash</code>: bash 셸 실행 (<code>bash</code> 안되는 경우 <code>-- sh</code>)</li>
+</ul>
+<hr>
+<h4>🚩 <code>kubectl logs niginx-pod</code></h4>
+<p>👉 Pod 안 컨테이너 로그 출력</p>
+<hr>
+<h4>🚩 <code>kubectl describe pod my-nginx</code></h4>
+<p>👉 Pod 상세 정보 출력 (<code>get</code>보다 훨씬 자세함)</p>
+<ul>
+<li>어떤 이미지인지</li>
+<li>어떤 노드에 올라갔는지</li>
+<li>IP가 뭔지</li>
+<li>이벤트가 뭐 있었는지</li>
+<li>에러가 왜 났는지</li>
+</ul>
+<hr>
+<h4>🚩 <code>kubectl run nginx --image=nginx --dry-run=client -o yaml &gt; pod.yaml</code></h4>
+<h5><code>kubectl run nginx --image=nginx</code></h5>
+<p>👉 nginx Pod를 만들어라</p>
+<h5><code>--dry-run=client</code></h5>
+<p>👉 실제로 만들지말고, 내 컴퓨터에서 명령 결과만 미리 생성(클러스터에는 안 올림)</p>
+<h5><code>-o yaml</code></h5>
+<p>👉 출력 형식을 YAML로 보여달라는 뜻</p>
+<h5><code>&gt; pod.yaml</code></h5>
+<p>👉 이 출력 결과를 화면에 보여주지 말고 <code>pod.yaml</code> 파일에 저장해라</p>
+<blockquote>
+<p>nginx Pod를 만들기 위한 기본 YAML 템플릿을 자동으로 생성해서 pod.yaml에 저장하라는 명령어</p>
+</blockquote>
+
+    </article>
+  </main>
+</body>
+</html>

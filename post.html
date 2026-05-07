@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Junnnhhh Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: "Inter", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: #f7f8fb;
+      color: #172033;
+    }
+
+    main {
+      width: min(720px, calc(100% - 28px));
+      margin: 80px auto;
+      padding: 28px;
+      border: 1px solid #e1e7ef;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    a {
+      color: #0f766e;
+      font-weight: 600;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>게시글로 이동 중입니다</h1>
+    <p>잠시만 기다려주세요. 이동되지 않으면 <a href="./index.html#posts">목록으로 돌아가기</a>를 눌러주세요.</p>
+  </main>
+
+  <script>
+    const postMap = {
+      "category/cloud/kubernetes/README.md": "posts/kubernetes/readme.html",
+      "category/cloud/kubernetes/0_환경셋팅.md": "posts/kubernetes/0-environment.html",
+      "category/cloud/kubernetes/1-1_k8s 기초.md": "posts/kubernetes/1-1-k8s-basics.html",
+      "category/cloud/kubernetes/1-2_yaml 구조.md": "posts/kubernetes/1-2-yaml-structure.html",
+      "category/cloud/kubernetes/1-3_명령어 정리.md": "posts/kubernetes/1-3-commands.html",
+      "category/cloud/kubernetes/2-1_pod.md": "posts/kubernetes/2-1-pod.html",
+      "category/cloud/kubernetes/2-2_multi container pod.md": "posts/kubernetes/2-2-multi-container-pod.html",
+      "category/cloud/kubernetes/2-3_init container.md": "posts/kubernetes/2-3-init-container.html",
+      "category/cloud/kubernetes/2-4_sidecar 패턴.md": "posts/kubernetes/2-4-sidecar-pattern.html",
+      "category/cloud/kubernetes/3-1_Workload(Deployment, ReplicaSet).md": "posts/kubernetes/3-1-workload.html",
+      "category/cloud/kubernetes/3-2_Rolling Update 전략.md": "posts/kubernetes/3-2-rolling-update.html",
+      "category/cloud/kubernetes/3-3_Deployment 실전 명령어.md": "posts/kubernetes/3-3-deployment-commands.html",
+      "category/cloud/kubernetes/4-1_Service and Networking.md": "posts/kubernetes/4-1-service-networking.html",
+      "category/cloud/kubernetes/4-2_DNS and Ingress.md": "posts/kubernetes/4-2-dns-ingress.html",
+      "category/cloud/kubernetes/5-1_Config 관리.md": "posts/kubernetes/5-1-config.html",
+      "category/cloud/kubernetes/6-1_Storage.md": "posts/kubernetes/6-1-storage.html",
+      "category/cloud/kubernetes/questions/pod/q1.md": "posts/kubernetes/questions-pod-q1.html"
+    };
+
+    const file = new URLSearchParams(window.location.search).get("file");
+    window.location.replace(postMap[file] || "./index.html#posts");
+  </script>
+</body>
+</html>

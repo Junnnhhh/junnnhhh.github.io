@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>5-1 Config 관리 | Junnnhhh Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.8.1/github-markdown-light.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/styles/github.min.css">
+  <link rel="stylesheet" href="../post.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="../../index.html">Junnnhhh.dev</a>
+      <a class="back-link" href="../../index.html#posts">목록으로</a>
+    </div>
+  </header>
+  <main class="shell article-wrap">
+    <header class="article-head">
+      <h1>5-1 Config 관리</h1>
+      <p>cloud / kubernetes</p>
+    </header>
+    <article class="markdown-body article">
+<h2>🔥 Config 관리</h2>
+<h4>1️⃣ ConfigMap</h4>
+<p>👉 민감하지 않은 설정값 저장용<br>
+ex:</p>
+<ul>
+<li>DB_HOST</li>
+<li>LOG_LEVEL</li>
+<li>API_URL</li>
+</ul>
+<h5>✔️ ConfigMap 생성</h5>
+<pre><code class="hljs language-bash">kubectl create configmap app-config \ --from-literal=DB_HOST=mysql \ --from-literal-LOG_LEVEL=debug
+</code></pre>
+<h5>✔️ YAML 방식</h5>
+<pre><code class="hljs language-yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">ConfigMap</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">app-config</span>
+<span class="hljs-attr">data:</span>
+  <span class="hljs-attr">DB_HOST:</span> <span class="hljs-string">mysql</span>
+  <span class="hljs-attr">LOG_LEVEL:</span> <span class="hljs-string">debug</span>
+</code></pre>
+<hr>
+<h4>2️⃣ Pod에서 ConfigMap 사용</h4>
+<h5>✔️ 방법 1: 환경변수로 주입</h5>
+<pre><code class="hljs language-yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Pod</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">configmap-env-pod</span>
+<span class="hljs-attr">spec:</span>
+  <span class="hljs-attr">containers:</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">app</span>
+    <span class="hljs-attr">image:</span> <span class="hljs-string">nginx</span>
+    <span class="hljs-attr">env:</span>
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">DB_HOST</span>
+      <span class="hljs-attr">valueFrom:</span>
+        <span class="hljs-attr">configMapKeyRef:</span>
+          <span class="hljs-attr">name:</span> <span class="hljs-string">app-config</span>
+          <span class="hljs-attr">key:</span> <span class="hljs-string">DB_HOST</span>
+</code></pre>
+<p>👉 컨테이너 내부에서는 <code>echo $DB_HOST</code>로 사용 가능</p>
+<h5>✔️ 방법 2: 전체 env 가져오기</h5>
+<pre><code class="hljs language-yaml"><span class="hljs-attr">envFrom:</span>
+<span class="hljs-bullet">-</span> <span class="hljs-attr">configMapRef:</span>
+    <span class="hljs-attr">name:</span> <span class="hljs-string">app-config</span>
+</code></pre>
+<p>👉 모든 key 자동 주입됨</p>
+<h5>✔️ 방법 3: Volume으로 마운트</h5>
+<pre><code class="hljs language-yaml"><span class="hljs-attr">volumes:</span>
+<span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">config-volume</span>
+  <span class="hljs-attr">configMap:</span>
+    <span class="hljs-attr">name:</span> <span class="hljs-string">app-config</span>
+
+<span class="hljs-attr">containers:</span>
+<span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">app</span>
+  <span class="hljs-attr">image:</span> <span class="hljs-string">nginx</span>
+  <span class="hljs-attr">volumeMounts:</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">config-volume</span>
+    <span class="hljs-attr">mountPath:</span> <span class="hljs-string">/etc/config</span>
+</code></pre>
+<p>👉 결과:</p>
+<pre><code class="hljs language-text">/etc/config/DB_HOST
+/etc/config/LOG_LEVEL
+</code></pre>
+<hr>
+<h4>3️⃣ Secret (민감정보 관리)</h4>
+<p>👉 비밀번호, 토큰 같은 것</p>
+<ul>
+<li>base64로 저장됨 (암호화 X, 인코딩 O)</li>
+</ul>
+<h5>✔️ Secret 생성</h5>
+<pre><code class="hljs language-bash">kubectl create secret generic db-secret \ --from-literal=DB_PASSWORD=1234
+</code></pre>
+<h5>✔️ YAML</h5>
+<pre><code class="hljs language-yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Secret</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">db-secret</span>
+<span class="hljs-attr">type:</span> <span class="hljs-string">Opaque</span>
+<span class="hljs-attr">data:</span>
+  <span class="hljs-attr">DB_PASSWORD:</span> <span class="hljs-string">MTIzNA==</span>   <span class="hljs-comment"># base64(1234)</span>
+</code></pre>
+<hr>
+<h4>4️⃣ Pod에서 Secret 사용</h4>
+<h5>✔️ 환경변수</h5>
+<pre><code class="hljs language-yaml"><span class="hljs-attr">env:</span>
+<span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">DB_PASSWORD</span>
+  <span class="hljs-attr">valueFrom:</span>
+    <span class="hljs-attr">secretKeyRef:</span>
+      <span class="hljs-attr">name:</span> <span class="hljs-string">db-secret</span>
+      <span class="hljs-attr">key:</span> <span class="hljs-string">DB_PASSWORD</span>
+</code></pre>
+<h5>✔️ Volume</h5>
+<pre><code class="hljs language-yaml"><span class="hljs-attr">volumes:</span>
+<span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">secret-volume</span>
+  <span class="hljs-attr">secret:</span>
+    <span class="hljs-attr">secretName:</span> <span class="hljs-string">db-secret</span>
+</code></pre>
+
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2-4 sidecar 패턴 | Junnnhhh Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.8.1/github-markdown-light.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/styles/github.min.css">
+  <link rel="stylesheet" href="../post.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="../../index.html">Junnnhhh.dev</a>
+      <a class="back-link" href="../../index.html#posts">목록으로</a>
+    </div>
+  </header>
+  <main class="shell article-wrap">
+    <header class="article-head">
+      <h1>2-4 sidecar 패턴</h1>
+      <p>cloud / kubernetes</p>
+    </header>
+    <article class="markdown-body article">
+<h2>🔥 Sidecar 패턴</h2>
+<h4>1️⃣ 정의</h4>
+<p><strong>Sidecar 패턴 = 하나의 Pod 안에서 &quot;보조 역할 컨테이너&quot;를 붙이는 구조</strong></p>
+<ul>
+<li>메인 컨테이너: 실제 서비스</li>
+<li>Sidecar 컨테이너: 보조 기능 담당</li>
+</ul>
+<p>👉 즉, <strong>같은 Pod 안에서 협업하는 구조</strong></p>
+<hr>
+<h4>2️⃣ 사용 이유</h4>
+<p>메인 컨테이너를 수정하지 않고, 기능을 추가하기 위해<br>
+대표적으로:</p>
+<ul>
+<li>로그 수집</li>
+<li>프록시</li>
+<li>보안</li>
+<li>데이터 동기화</li>
+</ul>
+<p>👉 <strong>“애플리케이션 코드는 건드리지 않고 기능 확장”</strong></p>
+<hr>
+<h4>3️⃣ 구조 이해</h4>
+<pre><code class="hljs language-text">Pod
+ ├── app container (main)
+ └── sidecar container (helper)
+</code></pre>
+<p>✔️ 특징:</p>
+<ul>
+<li>같은 네트워크 (localhost 공유)</li>
+<li>같은 볼륨 공유 가능</li>
+<li>생명주기 같이 감 (같이 죽고 같이 살아남)</li>
+</ul>
+<hr>
+<h4>4️⃣ 대표 사용 사례</h4>
+<p>📌 1. 로그 수집 (제일 중요)</p>
+<ul>
+<li>app → 파일로 로그 남김</li>
+<li>sidecar → 그 파일 읽어서 외부로 전송</li>
+</ul>
+<p>📌 2. nginx 프록시</p>
+<ul>
+<li>app 앞단에 nginx 붙여서</li>
+<li>로드밸런싱</li>
+<li>SSL 처리</li>
+</ul>
+<p>📌 3. config reload</p>
+<ul>
+<li>sidecar가 config 감시해서 변경되면 reload</li>
+</ul>
+<hr>
+<h4>5️⃣ 예시 YAML</h4>
+<pre><code class="hljs language-yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span>
+<span class="hljs-attr">kind:</span> <span class="hljs-string">Pod</span>
+<span class="hljs-attr">metadata:</span>
+  <span class="hljs-attr">name:</span> <span class="hljs-string">sidecar-pod</span>
+<span class="hljs-attr">spec:</span>
+  <span class="hljs-attr">containers:</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">app</span>
+    <span class="hljs-attr">image:</span> <span class="hljs-string">busybox</span>
+    <span class="hljs-attr">command:</span> [<span class="hljs-string">&quot;sh&quot;</span>, <span class="hljs-string">&quot;-c&quot;</span>, <span class="hljs-string">&quot;while true; do echo hello &gt;&gt; /var/log/app.log; sleep 5; done&quot;</span>]
+    <span class="hljs-attr">volumeMounts:</span>
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">log-volume</span>
+      <span class="hljs-attr">mountPath:</span> <span class="hljs-string">/var/log</span>
+
+  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">sidecar</span>
+    <span class="hljs-attr">image:</span> <span class="hljs-string">busybox</span>
+    <span class="hljs-attr">command:</span> [<span class="hljs-string">&quot;sh&quot;</span>, <span class="hljs-string">&quot;-c&quot;</span>, <span class="hljs-string">&quot;tail -f /var/log/app.log&quot;</span>]
+    <span class="hljs-attr">volumeMounts:</span>
+    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">log-volume</span>
+      <span class="hljs-attr">mountPath:</span> <span class="hljs-string">/var/log</span>
+
+  <span class="hljs-attr">volumes:</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">log-volume</span>
+    <span class="hljs-attr">emptyDir:</span> {}
+</code></pre>
+<hr>
+<h4>6️⃣ 핵심 포인트 정리</h4>
+<p>✔️ Sidecar는 같은 Pod 안의 컨테이너<br>
+✔️ 메인 기능을 보조하는 역할<br>
+✔️ volume 공유해서 데이터 전달 많이 함<br>
+✔️ lifecycle 동일 (같이 죽음)<br>
+✔️ 대표: 로그 수집, 프록시, 보안</p>
+<hr>
+<h4>⚠️ Init Container와 차이</h4>
+<table>
+<thead>
+<tr>
+<th>구분</th>
+<th>Sidecar</th>
+<th>Init Container</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>실행시점</td>
+<td>항상 같이 실행</td>
+<td>시작 전에만 실행</td>
+</tr>
+<tr>
+<td>지속성</td>
+<td>계속 살아있음</td>
+<td>끝나면 종료</td>
+</tr>
+<tr>
+<td>용도</td>
+<td>보조 기능</td>
+<td>초기 세팅</td>
+</tr>
+</tbody>
+</table>
+<p>❗<strong>Sidecar는 특별한 문법이 있는 게 아니라 그냥 <code>containers</code>에 하나 더 추가하면 된다.</strong><br>
+👉 <strong>Sidecar = containers 배열에 그냥 하나 더 넣고, 역할만 보조로 쓰는 것</strong></p>
+
+    </article>
+  </main>
+</body>
+</html>
