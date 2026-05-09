@@ -7,59 +7,148 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    body {
-      margin: 0;
-      font-family: "Inter", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-      background: #f7f8fb;
-      color: #172033;
-    }
-
-    main {
-      width: min(720px, calc(100% - 28px));
-      margin: 80px auto;
-      padding: 28px;
-      border: 1px solid #e1e7ef;
-      border-radius: 8px;
-      background: #ffffff;
-    }
-
-    a {
-      color: #0f766e;
-      font-weight: 600;
-      text-decoration: none;
-    }
-  </style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.8.1/github-markdown-light.css">
+  <link rel="stylesheet" href="./scripts/vendor/highlight-github.min.css">
+  <link rel="stylesheet" href="./posts/post.css">
 </head>
 <body>
-  <main>
-    <h1>게시글로 이동 중입니다</h1>
-    <p>잠시만 기다려주세요. 이동되지 않으면 <a href="./index.html#posts">목록으로 돌아가기</a>를 눌러주세요.</p>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="./index.html">Junnnhhh.dev</a>
+      <a class="back-link" href="./index.html#posts">목록으로</a>
+    </div>
+  </header>
+
+  <main class="shell article-wrap">
+    <header class="article-head">
+      <h1 id="post-title">Loading...</h1>
+      <p id="post-path"></p>
+    </header>
+    <article class="markdown-body article" id="post-content">
+      <p>게시글 렌더링을 준비하고 있습니다.</p>
+    </article>
   </main>
 
+  <script src="./scripts/vendor/markdown-it.min.js"></script>
+  <script src="./posts-manifest.js"></script>
   <script>
-    const postMap = {
-      "category/cloud/kubernetes/README.md": "posts/kubernetes/readme.html",
-      "category/cloud/kubernetes/0_환경셋팅.md": "posts/kubernetes/0-environment.html",
-      "category/cloud/kubernetes/1-1_k8s 기초.md": "posts/kubernetes/1-1-k8s-basics.html",
-      "category/cloud/kubernetes/1-2_yaml 구조.md": "posts/kubernetes/1-2-yaml-structure.html",
-      "category/cloud/kubernetes/1-3_명령어 정리.md": "posts/kubernetes/1-3-commands.html",
-      "category/cloud/kubernetes/2-1_pod.md": "posts/kubernetes/2-1-pod.html",
-      "category/cloud/kubernetes/2-2_multi container pod.md": "posts/kubernetes/2-2-multi-container-pod.html",
-      "category/cloud/kubernetes/2-3_init container.md": "posts/kubernetes/2-3-init-container.html",
-      "category/cloud/kubernetes/2-4_sidecar 패턴.md": "posts/kubernetes/2-4-sidecar-pattern.html",
-      "category/cloud/kubernetes/3-1_Workload(Deployment, ReplicaSet).md": "posts/kubernetes/3-1-workload.html",
-      "category/cloud/kubernetes/3-2_Rolling Update 전략.md": "posts/kubernetes/3-2-rolling-update.html",
-      "category/cloud/kubernetes/3-3_Deployment 실전 명령어.md": "posts/kubernetes/3-3-deployment-commands.html",
-      "category/cloud/kubernetes/4-1_Service and Networking.md": "posts/kubernetes/4-1-service-networking.html",
-      "category/cloud/kubernetes/4-2_DNS and Ingress.md": "posts/kubernetes/4-2-dns-ingress.html",
-      "category/cloud/kubernetes/5-1_Config 관리.md": "posts/kubernetes/5-1-config.html",
-      "category/cloud/kubernetes/6-1_Storage.md": "posts/kubernetes/6-1-storage.html",
-      "category/cloud/kubernetes/questions/pod/q1.md": "posts/kubernetes/questions-pod-q1.html"
-    };
+    const params = new URLSearchParams(window.location.search);
+    const file = params.get("file");
+    const posts = window.BLOG_POSTS || [];
+    const post = posts.find((item) => item.file === file);
+    const title = document.querySelector("#post-title");
+    const pathLabel = document.querySelector("#post-path");
+    const content = document.querySelector("#post-content");
 
-    const file = new URLSearchParams(window.location.search).get("file");
-    window.location.replace(postMap[file] || "./index.html#posts");
+    function isExternalUrl(value) {
+      return /^(https?:)?\/\//i.test(value) || value.startsWith("data:") || value.startsWith("#");
+    }
+
+    function encodePath(value) {
+      return value.split("/").map(encodeURIComponent).join("/");
+    }
+
+    function decodePath(value) {
+      try {
+        return decodeURIComponent(value);
+      } catch (_) {
+        return value;
+      }
+    }
+
+    function markdownBaseUrl(sourceFile) {
+      const parts = sourceFile.split("/");
+      parts.pop();
+      return new URL(`${encodePath(parts.join("/"))}/`, new URL(".", window.location.href));
+    }
+
+    function findPostByResolvedUrl(url) {
+      const decodedPath = decodePath(url.pathname).replace(/^\/+/, "");
+      return posts.find((item) => item.file === decodedPath);
+    }
+
+    function createRenderer(sourceFile) {
+      const baseUrl = markdownBaseUrl(sourceFile);
+      const md = window.markdownit({
+        html: false,
+        linkify: true,
+        typographer: true,
+        breaks: true,
+        highlight(code, language) {
+          if (language && window.hljs && window.hljs.getLanguage(language)) {
+            try {
+              return `<pre><code class="hljs language-${language}">${window.hljs.highlight(code, { language, ignoreIllegals: true }).value}</code></pre>`;
+            } catch (_) {}
+          }
+
+          return `<pre><code class="hljs">${md.utils.escapeHtml(code)}</code></pre>`;
+        }
+      });
+
+      const defaultImage = md.renderer.rules.image;
+      md.renderer.rules.image = (tokens, idx, options, env, self) => {
+        const token = tokens[idx];
+        const src = token.attrGet("src");
+
+        if (src && !isExternalUrl(src) && !src.startsWith("/")) {
+          token.attrSet("src", new URL(src, baseUrl).href);
+        }
+
+        return defaultImage(tokens, idx, options, env, self);
+      };
+
+      const defaultLinkOpen = md.renderer.rules.link_open || ((tokens, idx, options, env, self) => self.renderToken(tokens, idx, options));
+      md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
+        const token = tokens[idx];
+        const href = token.attrGet("href");
+
+        if (href && href.endsWith(".md") && !isExternalUrl(href) && !href.startsWith("/")) {
+          const linkedPost = findPostByResolvedUrl(new URL(href, baseUrl));
+
+          if (linkedPost) {
+            token.attrSet("href", `post.html?file=${encodeURIComponent(linkedPost.file)}`);
+          }
+        }
+
+        return defaultLinkOpen(tokens, idx, options, env, self);
+      };
+
+      return md;
+    }
+
+    async function renderPost() {
+      if (!post) {
+        title.textContent = "게시글을 찾을 수 없습니다";
+        pathLabel.textContent = file || "";
+        content.innerHTML = "<p>목록에 등록되지 않은 Markdown 파일입니다.</p>";
+        return;
+      }
+
+      document.title = `${post.title} | Junnnhhh Blog`;
+      title.textContent = post.title;
+      pathLabel.textContent = post.categoryPath;
+
+      if (typeof post.content === "string") {
+        content.innerHTML = createRenderer(post.file).render(post.content);
+        return;
+      }
+
+      try {
+        const response = await fetch(encodePath(post.file));
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const markdown = await response.text();
+        content.innerHTML = createRenderer(post.file).render(markdown);
+      } catch (error) {
+        title.textContent = "게시글을 불러오지 못했습니다";
+        content.innerHTML = `<p>${error.message}</p>`;
+      }
+    }
+
+    renderPost();
   </script>
 </body>
 </html>

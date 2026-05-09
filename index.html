@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
@@ -304,7 +304,6 @@
     .post-card {
       position: relative;
       display: block;
-      align-items: center;
       padding: 11px 13px 11px 26px;
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -338,6 +337,14 @@
       line-height: 1.35;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .post-meta {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.45;
     }
 
     .empty-state {
@@ -450,79 +457,63 @@
     <div class="shell">© 2026 Junnnhhh</div>
   </footer>
 
+  <script src="./posts-manifest.js"></script>
   <script>
-    const folders = [
-      {
-        id: "backend",
-        title: "Backend",
-        note: "category/backend",
-        posts: [],
-        children: [
-          {
-            id: "backend-kafka",
-            title: "Kafka",
-            note: "category/backend/kafka",
-            posts: [],
-            children: []
-          }
-        ]
-      },
-      {
-        id: "cloud",
-        title: "Cloud",
-        note: "category/cloud",
-        posts: [],
-        children: [
-          {
-            id: "cloud-kubernetes",
-            title: "Kubernetes",
-            note: "category/cloud/kubernetes",
-            posts: [
-              { title: "README", href: "posts/kubernetes/readme.html" },
-              { title: "0 환경셋팅", href: "posts/kubernetes/0-environment.html" },
-              { title: "1-1 k8s 기초", href: "posts/kubernetes/1-1-k8s-basics.html" },
-              { title: "1-2 yaml 구조", href: "posts/kubernetes/1-2-yaml-structure.html" },
-              { title: "1-3 명령어 정리", href: "posts/kubernetes/1-3-commands.html" },
-              { title: "2-1 pod", href: "posts/kubernetes/2-1-pod.html" },
-              { title: "2-2 multi container pod", href: "posts/kubernetes/2-2-multi-container-pod.html" },
-              { title: "2-3 init container", href: "posts/kubernetes/2-3-init-container.html" },
-              { title: "2-4 sidecar 패턴", href: "posts/kubernetes/2-4-sidecar-pattern.html" },
-              { title: "3-1 Workload(Deployment, ReplicaSet)", href: "posts/kubernetes/3-1-workload.html" },
-              { title: "3-2 Rolling Update 전략", href: "posts/kubernetes/3-2-rolling-update.html" },
-              { title: "3-3 Deployment 실전 명령어", href: "posts/kubernetes/3-3-deployment-commands.html" },
-              { title: "4-1 Service and Networking", href: "posts/kubernetes/4-1-service-networking.html" },
-              { title: "4-2 DNS and Ingress", href: "posts/kubernetes/4-2-dns-ingress.html" },
-              { title: "5-1 Config 관리", href: "posts/kubernetes/5-1-config.html" },
-              { title: "6-1 Storage", href: "posts/kubernetes/6-1-storage.html" }
-            ],
-            children: [
-              {
-                id: "cloud-kubernetes-questions",
-                title: "questions",
-                note: "category/cloud/kubernetes/questions",
-                posts: [],
-                children: [
-                  {
-                    id: "cloud-kubernetes-questions-pod",
-                    title: "pod",
-                    note: "category/cloud/kubernetes/questions/pod",
-                    posts: [
-                      { title: "Pod 문제 q1", href: "posts/kubernetes/questions-pod-q1.html" }
-                    ],
-                    children: []
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    ];
-
+    const posts = window.BLOG_POSTS || [];
+    const featuredFiles = window.BLOG_FEATURED_FILES || [];
     const tree = document.querySelector("#category-tree");
     const title = document.querySelector("#folder-title");
     const note = document.querySelector("#folder-note");
     const postList = document.querySelector("#post-list");
+
+    function postHref(file) {
+      return `post.html?file=${encodeURIComponent(file)}`;
+    }
+
+    function createFolder(titleText, noteText) {
+      return {
+        id: noteText,
+        title: titleText,
+        note: noteText,
+        posts: [],
+        children: [],
+        childMap: new Map()
+      };
+    }
+
+    function buildFolders() {
+      const roots = [];
+      const rootMap = new Map();
+
+      posts.forEach((post) => {
+        let currentList = roots;
+        let currentMap = rootMap;
+        let currentFolder = null;
+        let notePath = "category";
+
+        post.category.forEach((segment) => {
+          notePath += `/${segment.toLowerCase()}`;
+
+          if (!currentMap.has(segment)) {
+            const folder = createFolder(segment, notePath);
+            currentMap.set(segment, folder);
+            currentList.push(folder);
+          }
+
+          currentFolder = currentMap.get(segment);
+          currentList = currentFolder.children;
+          currentMap = currentFolder.childMap;
+        });
+
+        if (currentFolder) {
+          currentFolder.posts.push(post);
+        }
+      });
+
+      return roots;
+    }
+
+    const folders = buildFolders();
 
     function renderTree(nodes, parent) {
       nodes.forEach((folder) => {
@@ -549,6 +540,7 @@
         button.append(label, count);
         button.addEventListener("click", () => {
           selectFolder(folder.id);
+
           if (hasChildren) {
             node.classList.toggle("collapsed");
             toggle.textContent = node.classList.contains("collapsed") ? "▸" : "▾";
@@ -570,9 +562,11 @@
     function findFolder(id, nodes = folders) {
       for (const folder of nodes) {
         if (folder.id === id) return folder;
+
         const child = findFolder(id, folder.children);
         if (child) return child;
       }
+
       return null;
     }
 
@@ -586,9 +580,13 @@
 
       title.textContent = folder.title;
       note.textContent = folder.note;
+      renderPosts(folder.posts);
+    }
+
+    function renderPosts(items) {
       postList.innerHTML = "";
 
-      if (folder.posts.length === 0) {
+      if (items.length === 0) {
         const empty = document.createElement("div");
         empty.className = "empty-state";
         empty.textContent = "작성된 글이 없습니다.";
@@ -596,25 +594,43 @@
         return;
       }
 
-      folder.posts.forEach((post) => {
+      items.forEach((post) => {
         const card = document.createElement("a");
         const body = document.createElement("div");
         const postTitle = document.createElement("h3");
+        const meta = document.createElement("p");
 
         card.className = "post-card";
-        card.href = post.href;
+        card.href = postHref(post.file);
         postTitle.className = "post-title";
         postTitle.textContent = post.title;
+        meta.className = "post-meta";
+        meta.textContent = post.categoryPath;
 
-        body.append(postTitle);
+        body.append(postTitle, meta);
         card.append(body);
         postList.append(card);
       });
     }
 
+    function renderFeaturedPosts() {
+      const featured = featuredFiles
+        .map((file) => posts.find((post) => post.file === file))
+        .filter(Boolean);
+      const fallback = posts.slice(0, 4);
+      const items = featured.length > 0 ? featured : fallback;
+
+      document.querySelectorAll(".tree-button").forEach((button) => {
+        button.classList.remove("active");
+      });
+
+      title.textContent = "Featured Posts";
+      note.textContent = "처음 읽기 좋은 글";
+      renderPosts(items);
+    }
+
     renderTree(folders, tree);
-    selectFolder("cloud-kubernetes");
+    renderFeaturedPosts();
   </script>
 </body>
 </html>
-

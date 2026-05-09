@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "build:posts": "node scripts/generate-posts.js"
+    "build:posts": "node scripts/generate-posts.js",
+    "dev": "node scripts/serve-static.js"
   },
   "devDependencies": {
     "highlight.js": "^11.11.1",
