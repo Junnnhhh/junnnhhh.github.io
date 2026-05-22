@@ -39,3 +39,60 @@ spec:
 ✔️ 단위 설명
 - CPU : `1000m = 1 CPU` `250m = 0.25 CPU`
 - Memory : `Mi`, `Gi` 사용
+
+___
+#### 2️⃣ HPA(Horizontal Pod Autoscaler)
+→ Pod 개수를 자동으로 늘리고 줄이는 기능
+👉 "부하 많으면 Pod 늘리고, 줄면 줄인다"
+
+##### 💠 동작 방식
+기본적으로 **CPU 사용률 기준**
+ex:
+- 목표 CPU: 50%
+- 현재 80% → Pod 증가
+- 현재 20% → Pod 감소
+
+##### 💠 HPA 구조
+```
+Deployment → Pod 여러 개
+           ↑
+         HPA가 개수 조절
+```
+
+##### 💠 HPA 생성 명령어
+```bash
+kubectl autoscale deployment my-app \
+  --cpu-percent=50 \
+  --min=1 \
+  --max=5
+```
+
+##### 💠 YAML(참고용)
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: my-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: my-app
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50
+```
+___
+#### 3️⃣ 핵심 정리
+- requests = 스케줄링 기준
+- limits = 자원 제한
+- Memory limit 초과 → OOMKill
+- CPU limit 초과 → throttling
+- HPA = Pod 개수 자동 조절
+- HPA는 request 기준으로 동작
