@@ -167,3 +167,103 @@ ___
 - Partition별로 관리
 - 유일한 위치 정보
 - Consumer 읽기 기준
+
+##### 예시
+```
+Partition 0
+
+Offset 0 → A
+Offset 1 → B
+Offset 2 → C
+```
+Consumer는
+```
+"어디까지 읽었는지"
+```
+를 Offset으로 기억.
+
+##### ❓ Commit
+Consumer는 읽은 Offset을 저장(commit)한다.
+그래야 장애 발생 후에도
+```
+마지막 읽은 위치부터 재시작
+```
+이 가능.
+___
+#### 5️⃣ Producer
+##### ❓ Producer
+👉 Kafka에 메시지를 보내는 어플리케이션.
+
+##### 역할
+- 메시지 생성
+- Topic 전송
+- Partition 선택
+- Retry 처리
+- Batch 처리
+
+##### 흐름
+```
+Producer
+   ↓
+Topic
+   ↓
+Partition
+```
+
+##### ACK 설정
+Producer는 메시지 저장 확인 수준을 지정할 수 있다.
+
+**acks=0**
+`확인 안함`
+→ 빠르지만 유실 가능성 있음
+
+**acks=1**
+→ Leader만 저장 확인
+
+**acks=all**
+→ Replica까지 모두 저장 확인 **(가장 안전하지만 느릴 수 있음)**
+
+___
+#### 6️⃣ Consumer
+##### ❓ Consumer
+👉 Kafka 메시지를 읽은 애플리케이션.
+
+##### 특징
+Kafka Consumer는 `Pull 방식`
+즉, **Consumer가 데이터를 직접** 가져간다.
+
+##### Poll 모델
+→ Consumer는 계속 polling 한다.
+```
+poll()
+poll()
+poll()
+```
+이런 방식으로 데이터를 읽는다.
+
+**※ Pull vs Poll**
+`Pull` → 동작 방식(아키텍처 개념)
+```
+"Consumer가 데이터를 직접 가져가는 방식"
+```
+
+`Poll` → 실제로 데이터를 가져오는 Consumer API 메서드
+
+___
+#### 7️⃣ Consumer Group
+##### ❓ Consumer Group
+👉 Consumer들을 묶는 단위
+
+##### 핵심 개념
+같은 Group 내에서는
+```
+한 Partition은 한 Consumer만 소비
+```
+
+##### 예시
+```
+Partition 0 → Consumer A
+Partition 1 → Consumer B
+Partition 2 → Consumer C
+```
+이렇게 병럴 처리된다.
